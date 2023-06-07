@@ -1,0 +1,35 @@
+{
+  "name": "onboarding-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js",
+    "deploy-dev": "serverless deploy --stage dev --aws-profile DEV2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luisferliza/onboarding-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/luisferliza/onboarding-backend/issues"
+  },
+  "homepage": "https://github.com/luisferliza/onboarding-backend#readme",
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "axios": "^1.4.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.1.4",
+    "express": "^4.18.2",
+    "http-status-codes": "^2.2.0",
+    "joi": "^17.9.2",
+    "jsonwebtoken": "^9.0.0",
+    "mariadb": "^3.1.2",
+    "moment": "^2.29.4",
+    "sequelize": "^6.32.0",
+    "serverless-http": "^3.2.0"
+  }
+}

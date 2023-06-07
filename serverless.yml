@@ -1,0 +1,14 @@
+service: onboarding
+provider:
+  name: aws
+  runtime: nodejs16.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  memorySize: 128
+  timeout: 28 # optional, in seconds, default is 6  
+
+functions:
+  app:
+    handler: app.handler
+    events:
+      - httpApi: "*"
