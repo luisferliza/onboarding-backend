@@ -42,10 +42,29 @@ async function obtenerCuadranteSP(usuarioId) {
   })
 }
 
+async function crearEvaluacionSP(blueprintId, usuarioId) {
+  return await sequelize.query(
+    `call SPCrearEvaluacionDesdeBlueprint(:blueprintId, :usuarioId)`,
+    {
+      replacements: { blueprintId, usuarioId },
+      type: QueryTypes.RAW
+    }
+  )
+}
+
+async function crearEvaluacionEstaticaSP(usuarioId) {
+  return await sequelize.query(`call SPCrearEvaluacionEstatica(:usuarioId)`, {
+    replacements: { usuarioId },
+    type: QueryTypes.RAW
+  })
+}
+
 module.exports = {
   findEvaluacionesAsignadas,
   findResultadosEvaluacion,
   calcularEvaluacionSP,
   verificarOnboardingTerminadoSP,
-  obtenerCuadranteSP
+  obtenerCuadranteSP,
+  crearEvaluacionSP,
+  crearEvaluacionEstaticaSP
 }

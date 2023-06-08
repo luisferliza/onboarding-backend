@@ -6,7 +6,9 @@ const {
   findEvaluacionesAsignadas,
   calcularEvaluacionSP,
   verificarOnboardingTerminadoSP,
-  obtenerCuadranteSP
+  obtenerCuadranteSP,
+  crearEvaluacionSP,
+  crearEvaluacionEstaticaSP
 } = require('../Database/CustomQuerys/Evaluacion')
 const { sendEmail } = require('../Utils/email.handler')
 const { User } = require('../Database/Models/usuario')
@@ -138,8 +140,21 @@ function getRealScore(obtained) {
   return 3
 }
 
+async function postEvaluacion(req, res, next) {
+  try {
+    const usuarioId = req.body.usuarioId
+    const blueprintId = req.body.blueprintId
+    await crearEvaluacionEstaticaSP(usuarioId)
+    success(req, res, null, 201)
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   getEvaluaciones,
   getEvaluacionesAsignadas,
-  putEvaluacion
+  putEvaluacion,
+  getRealScore,
+  postEvaluacion
 }

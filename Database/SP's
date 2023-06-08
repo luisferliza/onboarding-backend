@@ -1,0 +1,160 @@
+CREATE DEFINER=`admin`@`%` PROCEDURE `Onboarding`.`SPCalcularEvaluacion`(tipoEvaluacionId int)
+BEGIN 
+	Declare total int;
+	Set total = (
+		SELECT Sum(t.peso /100 * t.valor) FROM TPregunta t 
+		WHERE t.idSeccion in (
+			Select id from TSeccion t2 
+			where t2.idTipoEvaluacion = tipoEvaluacionId
+		)
+	);
+	UPDATE TTipoEvaluacion 
+	set obtenido = total
+	where id = tipoEvaluacionId;
+	
+END
+
+
+
+CREATE DEFINER=`admin`@`%` PROCEDURE `Onboarding`.`SPObtenerCuadrante`(usuarioId int)
+BEGIN 
+	Declare evaluacionId int;
+	SET evaluacionId = (
+		Select id from TEvaluacion t 
+		where t.idUsuario = usuarioId
+		order by t.fechaCreacion desc
+		limit 1
+	);
+	SELECT obtenido FROM TTipoEvaluacion te 
+	WHERE te.idEvaluacion = evaluacionId
+	ORDER BY nombre asc;
+	
+END
+
+
+CREATE DEFINER=`admin`@`%` PROCEDURE `Onboarding`.`SPObtenerEvaluacionCompleta`(evaluacionId int)
+BEGIN 
+	
+	CREATE OR REPLACE TEMPORARY TABLE TEvaluacionTemporal(
+		id int, 
+		nombre varchar(255),
+		descripcion varchar(255),
+		idEvaluacion int
+	);
+
+	CREATE OR REPLACE TEMPORARY TABLE TSeccionTemporal(
+		id int, 
+		nombre varchar(255),
+		idTipoEvaluacion int
+	);
+	-- Evaluaciones
+	Select a.id, a.nombre, a.descripcion, u.nombreCompleto, a.completa, a.comentarios, a.idUsuario from TEvaluacion a
+	Inner Join TUsuario u 
+	on a.idUsuario = u.id 
+	where a.id = evaluacionId;
+
+	-- Tipos de Evaluación 
+	INSERT INTO  TEvaluacionTemporal
+	Select te.id, te.nombre, te.descripcion, te.idEvaluacion  from TTipoEvaluacion te 
+	where te.idEvaluacion in (
+		Select id from TEvaluacion eva
+		where eva.id = evaluacionId
+		
+	);
+
+	SELECT * FROM TEvaluacionTemporal;
+
+	-- Secciones 
+	INSERT INTO TSeccionTemporal
+	Select id, nombre, idTipoEvaluacion from TSeccion t 
+	where t.idTipoEvaluacion in (
+		Select id from TEvaluacionTemporal
+	);
+
+	SELECT * FROM TSeccionTemporal;
+
+	Select * from TPregunta t 
+	where t.idSeccion in (
+		Select id from TSeccionTemporal
+	);	
+
+END
+
+
+CREATE DEFINER=`admin`@`%` PROCEDURE `Onboarding`.`SPVerificarTerminado`(usuarioId int)
+BEGIN 
+	IF ( (SELECT COUNT (*) FROM TEvaluacion eva where eva.idUsuario = usuarioId and eva.completa = TRUE) >=2 ) THEN 
+		Update TUsuario 
+		set onboardingCompleto = true where id = usuarioId;
+	END IF;
+	
+END
+
+
+CREATE DEFINER=`admin`@`%` PROCEDURE `Onboarding`.`SPCrearEvaluacionEstatica`(usuarioId int)
+BEGIN
+	DECLARE eva_id int;
+	DECLARE last_tipo_id int;
+	DECLARE last_seccion_id int;
+	INSERT INTO TEvaluacion(nombre, descripcion, nivel, fechaCreacion, usuarioCreacion, idUsuario)
+	VALUES ('Gestores de proyectos TI', 'Evaluación para TI', 5, NOW(), 'LLIZAMA', usuarioId);
+	
+	SET eva_id = (Select LAST_INSERT_ID());
+
+	INSERT INTO TTipoEvaluacion(nombre, descripcion, fechaCreacion, usuarioCreacion, idEvaluacion)
+	VALUES('Skill', 'Evaluación de habilidades técnicas', NOW(), 'LLIZAMA', eva_id);
+
+	SET last_tipo_id = (Select LAST_INSERT_ID());
+	INSERT INTO TSeccion(nombre, fechaCreacion, usuarioCreacion, idTipoEvaluacion)
+	VALUES('Objetivos de aprendizaje', now(), 'LLIZAMA', last_tipo_id);
+
+		SET last_seccion_id = (Select LAST_INSERT_ID());
+		INSERT INTO TPregunta(descripcion, valor, peso, fechaCreacion, usuarioCreacion, idSeccion)
+		values('Conocimiento del Negocio y Estructuras Organizacionales', 0, 40, NOW(), 'LLIZAMA', last_seccion_id);
+		INSERT INTO TPregunta(descripcion, valor, peso, fechaCreacion, usuarioCreacion, idSeccion)
+		values('Conocimiento de la Cultura ILU / Valores organizacionales y Códiga de Ética', 0, 15, NOW(), 'LLIZAMA', last_seccion_id);
+	
+			
+	INSERT INTO TSeccion(nombre, fechaCreacion, usuarioCreacion, idTipoEvaluacion)
+	VALUES('Desarrollo de competencias', now(), 'LLIZAMA', last_tipo_id);
+
+		SET last_seccion_id = (Select LAST_INSERT_ID());
+		INSERT INTO TPregunta(descripcion, valor, peso, fechaCreacion, usuarioCreacion, idSeccion)
+		values('Definición de políticas y seguimient de presupuesto de Operación de la siguiente Zafra 2022-2023', 0, 15, NOW(), 'LLIZAMA', last_seccion_id);
+		INSERT INTO TPregunta(descripcion, valor, peso, fechaCreacion, usuarioCreacion, idSeccion)
+		values('Ejecución acumulada a la fecha y proyección de cierre de Presupuesto del periodo 2021-2022', 0, 15, NOW(), 'LLIZAMA', last_seccion_id);
+
+	INSERT INTO TSeccion(nombre, fechaCreacion, usuarioCreacion, idTipoEvaluacion)
+	VALUES('Objetivos de desempeño', now(), 'LLIZAMA', last_tipo_id);
+	
+		SET last_seccion_id = (Select LAST_INSERT_ID());
+		INSERT INTO TPregunta(descripcion, valor, peso, fechaCreacion, usuarioCreacion, idSeccion)
+		values('Margen Operativo (Ponderación)', 0, 15, NOW(), 'LLIZAMA', last_seccion_id);
+
+
+	INSERT INTO TTipoEvaluacion(nombre, descripcion, fechaCreacion, usuarioCreacion, idEvaluacion)
+	VALUES('Wills', 'Evaluación de habilidades conductuales', NOW(), 'LLIZAMA', eva_id);
+
+	SET last_tipo_id = (Select LAST_INSERT_ID());
+	INSERT INTO TSeccion(nombre, fechaCreacion, usuarioCreacion, idTipoEvaluacion)
+	VALUES('Responsabilidad', now(), 'LLIZAMA', last_tipo_id);
+
+		SET last_seccion_id = (Select LAST_INSERT_ID());
+		INSERT INTO TPregunta(descripcion, valor, peso, fechaCreacion, usuarioCreacion, idSeccion)
+		values('Cumple con su deber y responde a lo acordado.', 0, 30, NOW(), 'LLIZAMA', last_seccion_id);
+
+	
+	INSERT INTO TSeccion(nombre, fechaCreacion, usuarioCreacion, idTipoEvaluacion)
+	VALUES('Compromiso', now(), 'LLIZAMA', last_tipo_id);
+
+		SET last_seccion_id = (Select LAST_INSERT_ID());
+		INSERT INTO TPregunta(descripcion, valor, peso, fechaCreacion, usuarioCreacion, idSeccion)
+		values('Es más que laborioso y va más allá de sus tareas para trascender.', 0, 15, NOW(), 'LLIZAMA', last_seccion_id);
+
+	INSERT INTO TSeccion(nombre, fechaCreacion, usuarioCreacion, idTipoEvaluacion)
+	VALUES('Trabajo en equipo', now(), 'LLIZAMA', last_tipo_id);
+
+		SET last_seccion_id = (Select LAST_INSERT_ID());
+		INSERT INTO TPregunta(descripcion, valor, peso, fechaCreacion, usuarioCreacion, idSeccion)
+		values('Demuestra la unión de voluntades y el conocimiento compartido genera mejores soluciones.', 0, 55, NOW(), 'LLIZAMA', last_seccion_id);
+END
